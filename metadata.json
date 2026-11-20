@@ -1,0 +1,6 @@
+{
+  "name": "Chat QA Analyzer",
+  "description": "ระบบ AI ตรวจสอบ วิเคราะห์ และพัฒนาคุณภาพการตอบแชทสำหรับทีม Customer Service และหัวหน้าทีม QA",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
