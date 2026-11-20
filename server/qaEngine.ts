@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { generateGeminiJson } from './gemini.ts';
 import type {
   AICoachPlanResponse,
   AuditAnalysisResult,
@@ -8,22 +8,17 @@ import type {
   ScenarioType,
 } from '../src/types/qa.ts';
 import { DEFAULT_CRITERIA, SCENARIO_MAP } from '../src/constants/qaConfig.ts';
-import { detectTimestampsInText } from '../src/utils/chatParser.ts';
+import { detectTimestampsInText } from '../src/utils/timestamp.ts';
 
-function getClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
-    throw new Error('ไม่พบ GEMINI_API_KEY ในระบบ กรุณาตั้งค่า API Key ใน Settings > Secrets');
-  }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
-}
+// Gemini JSON schema primitives (matches the Gemini REST schema format).
+const Type = {
+  OBJECT: 'OBJECT',
+  STRING: 'STRING',
+  NUMBER: 'NUMBER',
+  INTEGER: 'INTEGER',
+  BOOLEAN: 'BOOLEAN',
+  ARRAY: 'ARRAY',
+} as const;
 
 function getQualityLevel(percentage: number): QualityLevel {
   if (percentage >= 90) return 'ดีเยี่ยม';
@@ -47,7 +42,6 @@ export async function analyzeChatWithGemini(input: AnalyzeChatInput): Promise<{
   detectedScenario: ScenarioType;
   analysis: AuditAnalysisResult;
 }> {
-  const ai = getClient();
   const hasTimestamps = detectTimestampsInText(input.transcript);
 
   const criteriaSpecText = DEFAULT_CRITERIA.map((c) => {
@@ -99,12 +93,10 @@ ${input.transcript}
 
 โปรดประเมินบทสนทนานี้อย่างละเอียดครบทุกหัวข้อตาม JSON Schema ที่กำหนด`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-4-hydrogen',
-    contents: userPrompt,
-    config: {
+  const rawText = (
+    await generateGeminiJson({
       systemInstruction,
-      responseMimeType: 'application/json',
+      userPrompt,
       responseSchema: {
         type: Type.OBJECT,
         properties: {
@@ -245,10 +237,8 @@ ${input.transcript}
           'aiLimitations',
         ],
       },
-    },
-  });
-
-  const rawText = (response.text ?? '').trim();
+    })
+  ).trim();
   if (!rawText) {
     throw new Error('AI ไม่ได้ส่งข้อมูลกลับมา กรุณาลองใหม่อีกครั้ง');
   }
@@ -405,7 +395,6 @@ export interface GenerateCoachInput {
 export async function generateAICoachPlan(
   input: GenerateCoachInput
 ): Promise<AICoachPlanResponse> {
-  const ai = getClient();
 
   const systemInstruction = `คุณคือ AI Coach สำหรับหัวหน้าทีม QA และ Trainer ฝ่าย Customer Service
 หน้าที่ของคุณคือสร้างชุดเครื่องมือ Coaching เฉพาะบุคคลที่นำไปใช้งานฝึกสอนได้ทันที
@@ -432,12 +421,10 @@ export async function generateAICoachPlan(
 7. Checklist ปฏิบัติงานก่อนส่งแชท (5-6 ข้อ)
 8. คำแนะนำสำหรับ Trainer`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-4-hydrogen',
-    contents: userPrompt,
-    config: {
+  const rawText = (
+    await generateGeminiJson({
       systemInstruction,
-      responseMimeType: 'application/json',
+      userPrompt,
       responseSchema: {
         type: Type.OBJECT,
         properties: {
@@ -548,10 +535,8 @@ export async function generateAICoachPlan(
           'trainerGuidance',
         ],
       },
-    },
-  });
-
-  const rawText = (response.text ?? '').trim();
+    })
+  ).trim();
   if (!rawText) {
     throw new Error('AI Coach ไม่สามารถสร้างแผนได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง');
   }
