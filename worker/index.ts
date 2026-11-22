@@ -1,5 +1,5 @@
 import { handleApiRequest } from '../server/api.ts';
-import { setGeminiConfig } from '../server/gemini.ts';
+import { setAnthropicConfig } from '../server/anthropic.ts';
 import {
   createMemoryStore,
   demoStore,
@@ -21,8 +21,8 @@ interface D1DatabaseLike {
 interface Env {
   ASSETS?: { fetch(request: Request): Promise<Response> };
   DB?: D1DatabaseLike;
-  GEMINI_API_KEY?: string;
-  GEMINI_MODEL?: string;
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_MODEL?: string;
 }
 
 const STORE_ID = 'state';
@@ -101,7 +101,7 @@ async function readJsonBody(request: Request): Promise<Record<string, unknown>> 
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    setGeminiConfig({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL });
+    setAnthropicConfig({ apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL });
 
     const url = new URL(request.url);
 

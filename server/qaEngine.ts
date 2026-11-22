@@ -1,4 +1,4 @@
-import { generateGeminiJson } from './gemini.ts';
+import { generateClaudeJson } from './anthropic.ts';
 import type {
   AICoachPlanResponse,
   AuditAnalysisResult,
@@ -10,14 +10,14 @@ import type {
 import { DEFAULT_CRITERIA, SCENARIO_MAP } from '../src/constants/qaConfig.ts';
 import { detectTimestampsInText } from '../src/utils/timestamp.ts';
 
-// Gemini JSON schema primitives (matches the Gemini REST schema format).
+// JSON Schema primitives for the Claude tool input schema.
 const Type = {
-  OBJECT: 'OBJECT',
-  STRING: 'STRING',
-  NUMBER: 'NUMBER',
-  INTEGER: 'INTEGER',
-  BOOLEAN: 'BOOLEAN',
-  ARRAY: 'ARRAY',
+  OBJECT: 'object',
+  STRING: 'string',
+  NUMBER: 'number',
+  INTEGER: 'integer',
+  BOOLEAN: 'boolean',
+  ARRAY: 'array',
 } as const;
 
 function getQualityLevel(percentage: number): QualityLevel {
@@ -38,7 +38,7 @@ export interface AnalyzeChatInput {
   criteriaWeights: Record<CriterionKey, number>;
 }
 
-export async function analyzeChatWithGemini(input: AnalyzeChatInput): Promise<{
+export async function analyzeChatWithClaude(input: AnalyzeChatInput): Promise<{
   detectedScenario: ScenarioType;
   analysis: AuditAnalysisResult;
 }> {
@@ -94,7 +94,8 @@ ${input.transcript}
 โปรดประเมินบทสนทนานี้อย่างละเอียดครบทุกหัวข้อตาม JSON Schema ที่กำหนด`;
 
   const rawText = (
-    await generateGeminiJson({
+    await generateClaudeJson({
+      toolName: 'submit_audit_analysis',
       systemInstruction,
       userPrompt,
       responseSchema: {
@@ -422,7 +423,8 @@ export async function generateAICoachPlan(
 8. คำแนะนำสำหรับ Trainer`;
 
   const rawText = (
-    await generateGeminiJson({
+    await generateClaudeJson({
+      toolName: 'submit_coach_plan',
       systemInstruction,
       userPrompt,
       responseSchema: {

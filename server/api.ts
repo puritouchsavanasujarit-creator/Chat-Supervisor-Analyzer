@@ -1,5 +1,5 @@
 import type { AgentProfile, QAAuditRecord, QASettings, ScenarioType } from '../src/types/qa.ts';
-import { analyzeChatWithGemini, generateAICoachPlan } from './qaEngine.ts';
+import { analyzeChatWithClaude, generateAICoachPlan } from './qaEngine.ts';
 import { demoStore, type StateStore } from './store.ts';
 
 export interface ApiRequest {
@@ -56,7 +56,7 @@ export async function handleApiRequest(request: ApiRequest): Promise<ApiResponse
       const auditorName = asString(body.auditorName, state.settings.defaultAuditorName);
       const scenarioInput = (asString(body.scenarioInput, 'auto') as ScenarioType | 'auto') || 'auto';
 
-      const result = await analyzeChatWithGemini({
+      const result = await analyzeChatWithClaude({
         agentName,
         employeeCode,
         auditDate,
